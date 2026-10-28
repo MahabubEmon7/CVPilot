@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CVPilot.API/CVPilot.API.csproj" />
+    <Project Path="src/CVPilot.Application/CVPilot.Application.csproj" />
+    <Project Path="src/CVPilot.Domain/CVPilot.Domain.csproj" />
+    <Project Path="src/CVPilot.Infrastructure/CVPilot.Infrastructure.csproj" />
+  </Folder>
+</Solution>

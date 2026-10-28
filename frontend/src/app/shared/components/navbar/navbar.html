@@ -1,0 +1,51 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top py-2">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-dark" routerLink="/">
+      <span class="brand-badge bg-primary text-white rounded p-1 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+        <i class="bi bi-file-earmark-person-fill fs-6"></i>
+      </span>
+      <span>CVPilot <span class="text-primary">AI</span></span>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+        <li class="nav-item">
+          <a class="nav-link text-secondary" routerLink="/" routerLinkActive="active text-primary fw-medium" [routerLinkActiveOptions]="{exact: true}">Home</a>
+        </li>
+        @if (authService.isAuthenticated()) {
+          <li class="nav-item">
+            <a class="nav-link text-secondary" routerLink="/dashboard" routerLinkActive="active text-primary fw-medium">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-secondary" routerLink="/profile" routerLinkActive="active text-primary fw-medium">Master Profile</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-secondary" routerLink="/job-analyzer" routerLinkActive="active text-primary fw-medium">Job Analyzer</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-secondary" routerLink="/resumes" routerLinkActive="active text-primary fw-medium">My Resumes</a>
+          </li>
+        }
+      </ul>
+
+      <div class="d-flex align-items-center gap-2">
+        @if (authService.isAuthenticated()) {
+          <div class="dropdown">
+            <span class="text-muted me-2 small">Hi, <strong>{{ authService.currentUser()?.fullName }}</strong></span>
+            <button class="btn btn-outline-danger btn-sm rounded-3" (click)="logout()">
+              <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+            </button>
+          </div>
+        } @else {
+          <a routerLink="/auth/login" class="cv-btn-outline btn-sm">Sign In</a>
+          <a routerLink="/auth/register" class="cv-btn-primary btn-sm">Get Started</a>
+        }
+      </div>
+    </div>
+  </div>
+</nav>
+

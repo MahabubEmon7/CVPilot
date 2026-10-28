@@ -1,0 +1,796 @@
+<div class="container py-4 py-md-5">
+  <!-- Toast Notification -->
+  @if (notification()) {
+    <div 
+      class="alert alert-{{ notification()?.type }} alert-dismissible fade show shadow-sm mb-4 d-flex align-items-center gap-2" 
+      role="alert"
+    >
+      <i class="bi" [class.bi-check-circle-fill]="notification()?.type === 'success'" [class.bi-exclamation-triangle-fill]="notification()?.type === 'danger'"></i>
+      <div>{{ notification()?.message }}</div>
+      <button type="button" class="btn-close ms-auto" (click)="notification.set(null)"></button>
+    </div>
+  }
+
+  <!-- Profile Header Card -->
+  <div class="cv-card p-4 bg-white border mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <div class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded-2 mb-2 fw-semibold small">
+          <i class="bi bi-shield-check me-1"></i> Master Profile (Single Source of Truth)
+        </div>
+        <h2 class="fw-bold text-dark mb-1">{{ profile()?.fullName || 'Your Master Profile' }}</h2>
+        <p class="text-secondary small mb-0">
+          <i class="bi bi-envelope me-1"></i> {{ profile()?.email }}
+          @if (profile()?.locationCity) {
+            <span class="ms-2"><i class="bi bi-geo-alt me-1"></i> {{ profile()?.locationCity }}, {{ profile()?.locationCountry }}</span>
+          }
+        </p>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <button class="cv-btn-outline btn-sm d-inline-flex align-items-center gap-1" (click)="openImportModal()">
+          <i class="bi bi-file-earmark-arrow-up"></i> Import Existing Resume
+        </button>
+        <span class="badge bg-success-subtle text-success border border-success-subtle p-2 px-3 rounded-pill fw-medium">
+          <i class="bi bi-check2-circle me-1"></i> Fact-Verified
+        </span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills mt-4 border-top pt-3 gap-2">
+      <li class="nav-item">
+        <button 
+          class="nav-link py-2 px-3 rounded-3" 
+          [class.active]="activeTab() === 'personal'" 
+          (click)="activeTab.set('personal')"
+        >
+          <i class="bi bi-person me-1"></i> Personal Info
+        </button>
+      </li>
+      <li class="nav-item">
+        <button 
+          class="nav-link py-2 px-3 rounded-3" 
+          [class.active]="activeTab() === 'experience'" 
+          (click)="activeTab.set('experience')"
+        >
+          <i class="bi bi-briefcase me-1"></i> Work Experience ({{ profile()?.experiences?.length || 0 }})
+        </button>
+      </li>
+      <li class="nav-item">
+        <button 
+          class="nav-link py-2 px-3 rounded-3" 
+          [class.active]="activeTab() === 'education'" 
+          (click)="activeTab.set('education')"
+        >
+          <i class="bi bi-mortarboard me-1"></i> Education ({{ profile()?.educations?.length || 0 }})
+        </button>
+      </li>
+      <li class="nav-item">
+        <button 
+          class="nav-link py-2 px-3 rounded-3" 
+          [class.active]="activeTab() === 'skills'" 
+          (click)="activeTab.set('skills')"
+        >
+          <i class="bi bi-cpu me-1"></i> Confirmed Skills ({{ profile()?.skills?.length || 0 }})
+        </button>
+      </li>
+      <li class="nav-item">
+        <button 
+          class="nav-link py-2 px-3 rounded-3" 
+          [class.active]="activeTab() === 'projects'" 
+          (click)="activeTab.set('projects')"
+        >
+          <i class="bi bi-code-slash me-1"></i> Projects ({{ profile()?.projects?.length || 0 }})
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  @if (isLoading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted small mt-2">Loading profile details...</p>
+    </div>
+  } @else {
+
+    <!-- TAB 1: PERSONAL INFORMATION -->
+    @if (activeTab() === 'personal') {
+      <div class="cv-card p-4 p-md-5 bg-white border">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h4 class="fw-bold text-dark mb-1">Personal & Contact Information</h4>
+            <p class="text-muted small mb-0">These details will be used in resume header and cover letters.</p>
+          </div>
+        </div>
+
+        <form [formGroup]="personalForm" (ngSubmit)="onSavePersonal()">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-secondary">Full Name *</label>
+              <input type="text" class="form-control" formControlName="fullName" placeholder="e.g. Asif Mahmud">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-secondary">Professional Headline</label>
+              <input type="text" class="form-control" formControlName="headline" placeholder="e.g. Senior ASP.NET Core & Angular Engineer">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold text-secondary">Professional Summary</label>
+              <textarea class="form-control" rows="3" formControlName="summary" placeholder="Brief overview of your background, core competencies, and career goals..."></textarea>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-secondary">Phone Number</label>
+              <input type="text" class="form-control" formControlName="phoneNumber" placeholder="+880 1700-000000">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-secondary">City</label>
+              <input type="text" class="form-control" formControlName="locationCity" placeholder="Dhaka">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-secondary">Country</label>
+              <input type="text" class="form-control" formControlName="locationCountry" placeholder="Bangladesh">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-secondary">LinkedIn URL</label>
+              <input type="url" class="form-control" formControlName="linkedInUrl" placeholder="https://linkedin.com/in/username">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-secondary">GitHub URL</label>
+              <input type="url" class="form-control" formControlName="githubUrl" placeholder="https://github.com/username">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-secondary">Portfolio URL</label>
+              <input type="url" class="form-control" formControlName="portfolioUrl" placeholder="https://portfolio.dev">
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top d-flex justify-content-end">
+            <button type="submit" class="cv-btn-primary d-inline-flex align-items-center gap-2" [disabled]="isSaving()">
+              @if (isSaving()) {
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+                <span>Saving...</span>
+              } @else {
+                <i class="bi bi-check-lg"></i>
+                <span>Save Personal Information</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- TAB 2: WORK EXPERIENCE -->
+    @if (activeTab() === 'experience') {
+      <div class="cv-card p-4 p-md-5 bg-white border">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+          <div>
+            <h4 class="fw-bold text-dark mb-1">Work Experiences</h4>
+            <p class="text-muted small mb-0">Record all your past and current roles. AI will tailor bullet points from these verified facts.</p>
+          </div>
+          <button class="cv-btn-primary btn-sm d-inline-flex align-items-center gap-1" (click)="openAddExpModal()">
+            <i class="bi bi-plus-lg"></i> Add Experience
+          </button>
+        </div>
+
+        @if (!profile()?.experiences || profile()?.experiences?.length === 0) {
+          <div class="text-center py-5 bg-light rounded-3 border">
+            <i class="bi bi-briefcase text-muted fs-1 mb-2"></i>
+            <h6 class="fw-bold text-dark">No work experience added yet</h6>
+            <p class="text-muted small mb-3">Add your previous or current jobs to tailor your resume.</p>
+            <button class="cv-btn-outline btn-sm" (click)="openAddExpModal()">Add First Experience</button>
+          </div>
+        } @else {
+          <div class="d-flex flex-column gap-3">
+            @for (exp of profile()?.experiences; track exp.id) {
+              <div class="p-4 border rounded-3 bg-light hover-card">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div>
+                    <h5 class="fw-bold text-dark mb-1">{{ exp.jobTitle }}</h5>
+                    <div class="text-secondary fw-semibold small mb-2">
+                      <span>{{ exp.companyName }}</span>
+                      @if (exp.location) { <span class="ms-1">&bull; {{ exp.location }}</span> }
+                    </div>
+                    <div class="text-muted small mb-3">
+                      <i class="bi bi-calendar3 me-1"></i>
+                      {{ exp.startDate | date:'MMM yyyy' }} &mdash; 
+                      @if (exp.isCurrent) {
+                        <span class="badge bg-success-subtle text-success">Present</span>
+                      } @else {
+                        {{ exp.endDate | date:'MMM yyyy' }}
+                      }
+                    </div>
+
+                    @if (exp.bulletPoints && exp.bulletPoints.length > 0) {
+                      <ul class="small text-secondary mb-0 ps-3">
+                        @for (bp of exp.bulletPoints; track $index) {
+                          <li>{{ bp }}</li>
+                        }
+                      </ul>
+                    }
+                  </div>
+
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" (click)="openEditExpModal(exp)">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" (click)="onDeleteExp(exp.id)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- TAB 3: EDUCATION -->
+    @if (activeTab() === 'education') {
+      <div class="cv-card p-4 p-md-5 bg-white border">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+          <div>
+            <h4 class="fw-bold text-dark mb-1">Education & Degrees</h4>
+            <p class="text-muted small mb-0">Record your academic qualifications (e.g. BSc, MSc, Diplomas).</p>
+          </div>
+          <button class="cv-btn-primary btn-sm d-inline-flex align-items-center gap-1" (click)="openAddEduModal()">
+            <i class="bi bi-plus-lg"></i> Add Education
+          </button>
+        </div>
+
+        @if (!profile()?.educations || profile()?.educations?.length === 0) {
+          <div class="text-center py-5 bg-light rounded-3 border">
+            <i class="bi bi-mortarboard text-muted fs-1 mb-2"></i>
+            <h6 class="fw-bold text-dark">No education records added yet</h6>
+            <p class="text-muted small mb-3">Add your academic degrees.</p>
+            <button class="cv-btn-outline btn-sm" (click)="openAddEduModal()">Add First Degree</button>
+          </div>
+        } @else {
+          <div class="d-flex flex-column gap-3">
+            @for (edu of profile()?.educations; track edu.id) {
+              <div class="p-4 border rounded-3 bg-light">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div>
+                    <h5 class="fw-bold text-dark mb-1">{{ edu.degree }} in {{ edu.fieldOfStudy }}</h5>
+                    <div class="text-secondary fw-semibold small mb-2">{{ edu.institution }}</div>
+                    <div class="text-muted small mb-2">
+                      <i class="bi bi-calendar3 me-1"></i>
+                      {{ edu.startDate | date:'yyyy' }} &mdash; 
+                      @if (edu.isCurrent) {
+                        <span class="badge bg-success-subtle text-success">Present</span>
+                      } @else {
+                        {{ edu.endDate | date:'yyyy' }}
+                      }
+                      @if (edu.gradeOrGpa) {
+                        <span class="ms-2 badge bg-light text-dark border">GPA: {{ edu.gradeOrGpa }}</span>
+                      }
+                    </div>
+                    @if (edu.description) {
+                      <p class="small text-secondary mb-0">{{ edu.description }}</p>
+                    }
+                  </div>
+
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" (click)="openEditEduModal(edu)">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" (click)="onDeleteEdu(edu.id)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- TAB 4: CONFIRMED SKILLS -->
+    @if (activeTab() === 'skills') {
+      <div class="cv-card p-4 p-md-5 bg-white border">
+        <div class="mb-4">
+          <h4 class="fw-bold text-dark mb-1">Confirmed Skills</h4>
+          <p class="text-muted small mb-0">Only confirmed skills in this list will ever appear in your tailored resumes. No unconfirmed skills will be invented.</p>
+        </div>
+
+        <!-- Add Skill Form -->
+        <div class="p-3 bg-light rounded-3 border mb-4">
+          <h6 class="fw-bold text-dark mb-3">Add a Skill</h6>
+          <form [formGroup]="skillForm" (ngSubmit)="onAddSkill()" class="row g-2 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-secondary mb-1">Skill Name *</label>
+              <input type="text" class="form-control form-control-sm" formControlName="name" placeholder="e.g. ASP.NET Core, Angular, SQL Server">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold text-secondary mb-1">Category</label>
+              <select class="form-select form-select-sm" formControlName="category">
+                <option [value]="SkillCategory.Technical">Technical</option>
+                <option [value]="SkillCategory.ToolOrFramework">Tool / Framework</option>
+                <option [value]="SkillCategory.Soft">Soft Skill</option>
+                <option [value]="SkillCategory.Language">Language</option>
+              </select>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold text-secondary mb-1">Proficiency</label>
+              <select class="form-select form-select-sm" formControlName="proficiency">
+                <option [value]="SkillProficiency.Beginner">Beginner</option>
+                <option [value]="SkillProficiency.Intermediate">Intermediate</option>
+                <option [value]="SkillProficiency.Advanced">Advanced</option>
+                <option [value]="SkillProficiency.Expert">Expert</option>
+              </select>
+            </div>
+
+            <div class="col-md-2">
+              <button type="submit" class="cv-btn-primary btn-sm w-100" [disabled]="isSaving()">
+                <i class="bi bi-plus-lg me-1"></i> Add
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Existing Skills List -->
+        @if (!profile()?.skills || profile()?.skills?.length === 0) {
+          <div class="text-center py-4 bg-light rounded-3 border">
+            <i class="bi bi-cpu text-muted fs-2 mb-2"></i>
+            <p class="text-muted small mb-0">No skills added yet. Add your technical and soft skills above.</p>
+          </div>
+        } @else {
+          <div class="d-flex flex-wrap gap-2">
+            @for (s of profile()?.skills; track s.id) {
+              <div class="badge-tag bg-white border shadow-xs d-inline-flex align-items-center gap-2 p-2 px-3 rounded-3">
+                <div>
+                  <span class="fw-bold text-dark">{{ s.name }}</span>
+                  <span class="badge bg-light text-muted border ms-2 small">{{ getCategoryName(s.category) }}</span>
+                </div>
+                <button type="button" class="btn btn-link text-danger p-0 ms-1" (click)="onDeleteSkill(s.id)" title="Remove skill">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- TAB 5: PROJECTS -->
+    @if (activeTab() === 'projects') {
+      <div class="cv-card p-4 p-md-5 bg-white border">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+          <div>
+            <h4 class="fw-bold text-dark mb-1">Portfolio Projects</h4>
+            <p class="text-muted small mb-0">Showcase your practical applications, open source contributions, or client solutions.</p>
+          </div>
+          <button class="cv-btn-primary btn-sm d-inline-flex align-items-center gap-1" (click)="openAddProjectModal()">
+            <i class="bi bi-plus-lg"></i> Add Project
+          </button>
+        </div>
+
+        @if (!profile()?.projects || profile()?.projects?.length === 0) {
+          <div class="text-center py-5 bg-light rounded-3 border">
+            <i class="bi bi-code-slash text-muted fs-1 mb-2"></i>
+            <h6 class="fw-bold text-dark">No projects added yet</h6>
+            <p class="text-muted small mb-3">Add key projects to showcase in tailored resumes.</p>
+            <button class="cv-btn-outline btn-sm" (click)="openAddProjectModal()">Add First Project</button>
+          </div>
+        } @else {
+          <div class="d-flex flex-column gap-3">
+            @for (p of profile()?.projects; track p.id) {
+              <div class="p-4 border rounded-3 bg-light">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div>
+                    <h5 class="fw-bold text-dark mb-1">{{ p.title }}</h5>
+                    @if (p.role) {
+                      <div class="text-secondary small fw-semibold mb-1">Role: {{ p.role }}</div>
+                    }
+                    <div class="badge bg-primary-subtle text-primary border border-primary-subtle mb-2">
+                      {{ p.technologiesUsed }}
+                    </div>
+                    <p class="small text-secondary mb-2">{{ p.description }}</p>
+
+                    @if (p.repoUrl || p.liveUrl) {
+                      <div class="d-flex gap-3 small mt-2">
+                        @if (p.repoUrl) {
+                          <a [href]="p.repoUrl" target="_blank" class="text-decoration-none">
+                            <i class="bi bi-github me-1"></i> Repository
+                          </a>
+                        }
+                        @if (p.liveUrl) {
+                          <a [href]="p.liveUrl" target="_blank" class="text-decoration-none text-success">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Live Demo
+                          </a>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" (click)="openEditProjectModal(p)">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" (click)="onDeleteProject(p.id)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+  }
+</div>
+
+<!-- WORK EXPERIENCE MODAL -->
+@if (showExpModal()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header border-bottom">
+          <h5 class="modal-title fw-bold text-dark">
+            {{ editingExpId() ? 'Edit Work Experience' : 'Add Work Experience' }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeExpModal()"></button>
+        </div>
+        <form [formGroup]="expForm" (ngSubmit)="onSaveExp()">
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-secondary">Job Title *</label>
+                <input type="text" class="form-control" formControlName="jobTitle" placeholder="e.g. Software Engineer">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-secondary">Company Name *</label>
+                <input type="text" class="form-control" formControlName="companyName" placeholder="e.g. Brain Station 23">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-secondary">Location</label>
+                <input type="text" class="form-control" formControlName="location" placeholder="e.g. Dhaka, Bangladesh">
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label small fw-semibold text-secondary">Start Date *</label>
+                <input type="date" class="form-control" formControlName="startDate">
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label small fw-semibold text-secondary">End Date</label>
+                <input type="date" class="form-control" formControlName="endDate" [disabled]="expForm.get('isCurrent')?.value">
+              </div>
+
+              <div class="col-12">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" formControlName="isCurrent" id="currentJobCheck">
+                  <label class="form-check-label small text-secondary" for="currentJobCheck">
+                    I currently work in this role
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label small fw-semibold text-secondary">
+                  Key Achievements / Responsibilities (One bullet per line)
+                </label>
+                <textarea 
+                  class="form-control" 
+                  rows="4" 
+                  formControlName="bulletPointsRaw" 
+                  placeholder="Built REST APIs using ASP.NET Core handling 50k requests daily&#10;Integrated Angular reactive forms and state management&#10;Optimized SQL Server query performance by 40%"
+                ></textarea>
+                <div class="form-text small">Enter each achievement or responsibility on a new line.</div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-top">
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="closeExpModal()">Cancel</button>
+            <button type="submit" class="cv-btn-primary btn-sm" [disabled]="isSaving()">
+              {{ isSaving() ? 'Saving...' : 'Save Experience' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- EDUCATION MODAL -->
+@if (showEduModal()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header border-bottom">
+          <h5 class="modal-title fw-bold text-dark">
+            {{ editingEduId() ? 'Edit Education' : 'Add Education' }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeEduModal()"></button>
+        </div>
+        <form [formGroup]="eduForm" (ngSubmit)="onSaveEdu()">
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label small fw-semibold text-secondary">Institution / University *</label>
+                <input type="text" class="form-control" formControlName="institution" placeholder="e.g. BUET, DU, NSU, AIUB">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-secondary">Degree *</label>
+                <input type="text" class="form-control" formControlName="degree" placeholder="e.g. Bachelor of Science">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-secondary">Field of Study *</label>
+                <input type="text" class="form-control" formControlName="fieldOfStudy" placeholder="e.g. Computer Science & Engineering">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-secondary">Start Date *</label>
+                <input type="date" class="form-control" formControlName="startDate">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-secondary">End Date</label>
+                <input type="date" class="form-control" formControlName="endDate">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-secondary">GPA / Grade (Optional)</label>
+                <input type="text" class="form-control" formControlName="gradeOrGpa" placeholder="e.g. 3.85 / 4.00">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-top">
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="closeEduModal()">Cancel</button>
+            <button type="submit" class="cv-btn-primary btn-sm" [disabled]="isSaving()">
+              {{ isSaving() ? 'Saving...' : 'Save Education' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- PROJECT MODAL -->
+@if (showProjectModal()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header border-bottom">
+          <h5 class="modal-title fw-bold text-dark">
+            {{ editingProjectId() ? 'Edit Project' : 'Add Project' }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeProjectModal()"></button>
+        </div>
+        <form [formGroup]="projectForm" (ngSubmit)="onSaveProject()">
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-secondary">Project Title *</label>
+                <input type="text" class="form-control" formControlName="title" placeholder="e.g. E-Commerce Microservices Engine">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-secondary">Your Role</label>
+                <input type="text" class="form-control" formControlName="role" placeholder="e.g. Full-Stack Developer">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label small fw-semibold text-secondary">Technologies Used *</label>
+                <input type="text" class="form-control" formControlName="technologiesUsed" placeholder="e.g. Angular 22, ASP.NET Core, SQL Server, Docker">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label small fw-semibold text-secondary">Description *</label>
+                <textarea class="form-control" rows="2" formControlName="description" placeholder="Brief overview of the project and your contributions..."></textarea>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-secondary">GitHub / Repo URL</label>
+                <input type="url" class="form-control" formControlName="repoUrl" placeholder="https://github.com/...">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-secondary">Live Demo URL</label>
+                <input type="url" class="form-control" formControlName="liveUrl" placeholder="https://demo...">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label small fw-semibold text-secondary">Bullet Points (Optional)</label>
+                <textarea class="form-control" rows="3" formControlName="bulletPointsRaw" placeholder="Implemented payment gateway integration with bKash and Stripe&#10;Achieved 99.9% uptime with Docker deployment"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-top">
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="closeProjectModal()">Cancel</button>
+            <button type="submit" class="cv-btn-primary btn-sm" [disabled]="isSaving()">
+              {{ isSaving() ? 'Saving...' : 'Save Project' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- RESUME IMPORT & REVIEW MODAL -->
+@if (showImportModal()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header border-bottom">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary-subtle text-primary p-2 rounded-2">
+              <i class="bi bi-file-earmark-arrow-up fs-6"></i>
+            </span>
+            <h5 class="modal-title fw-bold text-dark mb-0">
+              {{ importStage() === 'upload' ? 'Import Existing Resume' : 'Review Extracted Information' }}
+            </h5>
+          </div>
+          <button type="button" class="btn-close" (click)="closeImportModal()"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          @if (importStage() === 'upload') {
+            <div class="text-center py-4 border border-2 border-dashed rounded-3 p-4 bg-light">
+              <i class="bi bi-cloud-arrow-up text-primary fs-1 mb-2 d-block"></i>
+              <h6 class="fw-bold text-dark mb-1">Choose a resume file to upload</h6>
+              <p class="text-muted small mb-3">
+                Supported formats: <strong>PDF, DOCX, TXT</strong> (Maximum file size: 5MB)
+              </p>
+
+              <input 
+                type="file" 
+                id="resumeFileInput" 
+                class="d-none" 
+                accept=".pdf,.docx,.txt"
+                (change)="onFileSelected($event)"
+              >
+              <label for="resumeFileInput" class="cv-btn-outline btn-sm cursor-pointer mb-2">
+                <i class="bi bi-folder2-open me-1"></i> Browse Computer
+              </label>
+
+              @if (selectedFile()) {
+                <div class="mt-3 p-2 bg-white rounded border d-inline-flex align-items-center gap-2 small text-dark">
+                  <i class="bi bi-file-earmark-check-fill text-success fs-5"></i>
+                  <span class="fw-semibold">{{ selectedFile()?.name }}</span>
+                  <span class="text-muted">({{ ((selectedFile()?.size || 0) / 1024).toFixed(1) }} KB)</span>
+                </div>
+              }
+            </div>
+
+            <div class="alert alert-info py-2 px-3 small rounded-3 mt-3 mb-0 d-flex align-items-center gap-2">
+              <i class="bi bi-info-circle-fill flex-shrink-0"></i>
+              <div>
+                Text will be extracted automatically. You will be able to review, edit, and confirm every item before anything is saved to your profile.
+              </div>
+            </div>
+          } @else {
+            <!-- REVIEW & CONFIRM STAGE -->
+            <div class="alert alert-warning py-2 px-3 small rounded-3 mb-4 d-flex align-items-center gap-2">
+              <i class="bi bi-shield-exclamation flex-shrink-0 fs-5"></i>
+              <div>
+                <strong>Verification Required:</strong> Never silently assume extracted information is 100% correct. Please review each field below and make any necessary corrections before confirming.
+              </div>
+            </div>
+
+            <form [formGroup]="importReviewForm">
+              <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Extracted Personal Details</h6>
+              <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold text-secondary">Full Name</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="fullName">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold text-secondary">Professional Headline</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="headline">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold text-secondary">Phone Number</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="phoneNumber">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold text-secondary">City</label>
+                  <input type="text" class="form-control form-control-sm" formControlName="locationCity">
+                </div>
+                <div class="col-12">
+                  <label class="form-label small fw-semibold text-secondary">Professional Summary</label>
+                  <textarea class="form-control form-control-sm" rows="2" formControlName="summary"></textarea>
+                </div>
+              </div>
+
+              <!-- Extracted Skills -->
+              <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                Detected Skills ({{ importedSkills().length }})
+              </h6>
+              @if (importedSkills().length === 0) {
+                <p class="text-muted small">No specific skills detected automatically. You can add skills in your profile tab.</p>
+              } @else {
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                  @for (sk of importedSkills(); track $index) {
+                    <span class="badge bg-light text-dark border p-2 d-inline-flex align-items-center gap-1 rounded-2">
+                      <span>{{ sk.name }}</span>
+                      <button type="button" class="btn btn-link text-danger p-0 ms-1" (click)="removeImportedSkill($index)">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </span>
+                  }
+                </div>
+              }
+
+              <!-- Raw Text Preview Accordion -->
+              @if (parsedData()?.rawExtractedText) {
+                <div class="accordion mb-3" id="rawTextAcc">
+                  <div class="accordion-item border rounded-3">
+                    <h2 class="accordion-header">
+                      <button class="accordion-button collapsed py-2 small fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseText">
+                        <i class="bi bi-file-text me-2"></i> View Raw Extracted Text
+                      </button>
+                    </h2>
+                    <div id="collapseText" class="accordion-collapse collapse">
+                      <div class="accordion-body bg-light small" style="max-height: 200px; overflow-y: auto; white-space: pre-wrap;">
+                        {{ parsedData()?.rawExtractedText }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </form>
+          }
+        </div>
+
+        <div class="modal-footer border-top">
+          @if (importStage() === 'upload') {
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="closeImportModal()">Cancel</button>
+            <button 
+              type="button" 
+              class="cv-btn-primary btn-sm d-inline-flex align-items-center gap-2"
+              [disabled]="!selectedFile() || isParsing()"
+              (click)="onUploadAndParse()"
+            >
+              @if (isParsing()) {
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+                <span>Extracting Text...</span>
+              } @else {
+                <i class="bi bi-magic"></i>
+                <span>Extract & Review</span>
+              }
+            </button>
+          } @else {
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="importStage.set('upload')">
+              <i class="bi bi-arrow-left me-1"></i> Back to Upload
+            </button>
+            <button 
+              type="button" 
+              class="cv-btn-primary btn-sm d-inline-flex align-items-center gap-2"
+              [disabled]="isSaving()"
+              (click)="onConfirmImport()"
+            >
+              @if (isSaving()) {
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+                <span>Confirming...</span>
+              } @else {
+                <i class="bi bi-check2-circle"></i>
+                <span>Confirm & Save to Master Profile</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
+

@@ -1,0 +1,124 @@
+<div class="container py-4 py-md-5">
+  <!-- Welcome Banner -->
+  <div class="cv-card p-4 p-md-5 bg-white border mb-4">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-8">
+        <div class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill mb-2 fw-semibold">
+          <i class="bi bi-shield-check me-1"></i> Verified Career Workspace
+        </div>
+        <h2 class="fw-bold text-dark mb-2">
+          Welcome, {{ authService.currentUser()?.fullName }}!
+        </h2>
+        <p class="text-secondary mb-3">
+          Manage your verified master profile, paste job circulars, and generate precision-matched resumes that never hallucinate false facts.
+        </p>
+
+        <div class="d-flex flex-wrap gap-2">
+          <a routerLink="/profile" class="cv-btn-primary btn-sm d-inline-flex align-items-center gap-1">
+            <i class="bi bi-person-lines-fill"></i> Update Master Profile
+          </a>
+          <a routerLink="/job-analyzer" class="cv-btn-outline btn-sm d-inline-flex align-items-center gap-1">
+            <i class="bi bi-search"></i> Analyze Job Circular
+          </a>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small fw-semibold text-secondary">Profile Strength</span>
+            <span class="small fw-bold text-primary">{{ getProfileCompletionPercentage() }}%</span>
+          </div>
+          <div class="progress mb-2" style="height: 8px;">
+            <div 
+              class="progress-bar bg-primary" 
+              role="progressbar" 
+              [style.width.%]="getProfileCompletionPercentage()"
+            ></div>
+          </div>
+          <p class="small text-muted mb-0">
+            A comprehensive master profile generates higher quality, tailored resumes.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metric Counters -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="cv-card p-3 text-center h-100">
+        <div class="text-primary fs-3 fw-bold">{{ profile()?.experiences?.length || 0 }}</div>
+        <div class="text-muted small fw-medium">Experiences</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="cv-card p-3 text-center h-100">
+        <div class="text-primary fs-3 fw-bold">{{ profile()?.skills?.length || 0 }}</div>
+        <div class="text-muted small fw-medium">Confirmed Skills</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="cv-card p-3 text-center h-100">
+        <div class="text-primary fs-3 fw-bold">{{ profile()?.educations?.length || 0 }}</div>
+        <div class="text-muted small fw-medium">Education Degrees</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="cv-card p-3 text-center h-100">
+        <div class="text-primary fs-3 fw-bold">{{ profile()?.projects?.length || 0 }}</div>
+        <div class="text-muted small fw-medium">Projects</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Grid -->
+  <h4 class="fw-bold text-dark mb-3">Core Workflows</h4>
+  <div class="row g-4">
+    <div class="col-md-6 col-lg-4">
+      <div class="cv-card p-4 h-100 d-flex flex-column justify-content-between">
+        <div>
+          <div class="brand-badge bg-primary-subtle text-primary p-3 rounded-circle d-inline-flex mb-3">
+            <i class="bi bi-file-earmark-person fs-4"></i>
+          </div>
+          <h5 class="fw-bold text-dark">Master Profile</h5>
+          <p class="text-muted small">
+            Maintain your single source of truth for work history, verified skills, degrees, and portfolio projects.
+          </p>
+        </div>
+        <a routerLink="/profile" class="cv-btn-outline w-100 text-center mt-3">Open Master Profile</a>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="cv-card p-4 h-100 d-flex flex-column justify-content-between">
+        <div>
+          <div class="brand-badge bg-primary-subtle text-primary p-3 rounded-circle d-inline-flex mb-3">
+            <i class="bi bi-file-earmark-code fs-4"></i>
+          </div>
+          <h5 class="fw-bold text-dark">Job Description Analyzer</h5>
+          <p class="text-muted small">
+            Paste any circular from LinkedIn, Bdjobs, or job boards. AI extracts required skills and experience criteria.
+          </p>
+        </div>
+        <a routerLink="/job-analyzer" class="cv-btn-outline w-100 text-center mt-3">Analyze Circular</a>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="cv-card p-4 h-100 d-flex flex-column justify-content-between">
+        <div>
+          <div class="brand-badge bg-primary-subtle text-primary p-3 rounded-circle d-inline-flex mb-3">
+            <i class="bi bi-magic fs-4"></i>
+          </div>
+          <h5 class="fw-bold text-dark">Tailored Resumes</h5>
+          <p class="text-muted small">
+            Generate and preview job-specific resumes across Minimal ATS, Modern, and Software Engineer templates.
+          </p>
+        </div>
+        <a routerLink="/resumes" class="cv-btn-outline w-100 text-center mt-3">View Resumes</a>
+      </div>
+    </div>
+  </div>
+</div>
+
