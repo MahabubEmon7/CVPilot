@@ -30,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<CVPilot.Application.Features.Auth.Interfaces.IAuthService, CVPilot.Infrastructure.Services.AuthService>();
         services.AddScoped<CVPilot.Application.Features.Profile.Interfaces.IProfileService, CVPilot.Infrastructure.Services.ProfileService>();
         services.AddScoped<CVPilot.Application.Features.Profile.Interfaces.IResumeImportService, CVPilot.Infrastructure.Services.ResumeImportService>();
+        services.AddScoped<CVPilot.Application.Features.JobDescriptions.Interfaces.IJobDescriptionService, CVPilot.Infrastructure.Services.JobDescriptionService>();
 
         // AI Provider (defaults to MockAiResumeService for development and testing)
         services.AddScoped<IAiResumeService, MockAiResumeService>();

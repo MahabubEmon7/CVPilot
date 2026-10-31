@@ -1,0 +1,342 @@
+<div class="container py-4 py-md-5">
+  <!-- Toast Notification -->
+  @if (notification()) {
+    <div 
+      class="alert alert-{{ notification()?.type }} alert-dismissible fade show shadow-sm mb-4 d-flex align-items-center gap-2" 
+      role="alert"
+    >
+      <i class="bi" [class.bi-check-circle-fill]="notification()?.type === 'success'" [class.bi-exclamation-triangle-fill]="notification()?.type === 'danger'"></i>
+      <div>{{ notification()?.message }}</div>
+      <button type="button" class="btn-close ms-auto" (click)="notification.set(null)"></button>
+    </div>
+  }
+
+  <!-- Header Card -->
+  <div class="cv-card p-4 bg-white border mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <div class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded-2 mb-2 fw-semibold small">
+          <i class="bi bi-bullseye me-1"></i> Job Circular Analyzer
+        </div>
+        <h2 class="fw-bold text-dark mb-1">Analyze Job Circular</h2>
+        <p class="text-secondary small mb-0">
+          Paste any job description from LinkedIn, Bdjobs, or company portals. AI extracts requirements into editable criteria.
+        </p>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <button 
+          class="btn btn-sm rounded-3" 
+          [class.btn-primary]="activeTab() === 'analyze'" 
+          [class.btn-outline-secondary]="activeTab() !== 'analyze'"
+          (click)="activeTab.set('analyze')"
+        >
+          <i class="bi bi-magic me-1"></i> Analyzer
+        </button>
+        <button 
+          class="btn btn-sm rounded-3" 
+          [class.btn-primary]="activeTab() === 'history'" 
+          [class.btn-outline-secondary]="activeTab() !== 'history'"
+          (click)="activeTab.set('history')"
+        >
+          <i class="bi bi-clock-history me-1"></i> Saved Circulars ({{ savedJobs().length }})
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 1: ANALYZER & REVIEW -->
+  @if (activeTab() === 'analyze') {
+    @if (!currentJob()) {
+      <!-- INPUT FORM -->
+      <div class="cv-card p-4 p-md-5 bg-white border">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+          <div>
+            <h4 class="fw-bold text-dark mb-1">Paste Job Description</h4>
+            <p class="text-muted small mb-0">Copy the full job posting text and paste it below.</p>
+          </div>
+          <button type="button" class="btn btn-outline-primary btn-sm rounded-3" (click)="loadSampleCircular()">
+            <i class="bi bi-file-earmark-text me-1"></i> Load Sample Software Circular
+          </button>
+        </div>
+
+        <form [formGroup]="inputForm" (ngSubmit)="onAnalyze()">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-secondary">Target Job Title (Optional)</label>
+              <input type="text" class="form-control form-control-sm" formControlName="jobTitle" placeholder="e.g. ASP.NET Core Developer (AI will infer if blank)">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-secondary">Company Name (Optional)</label>
+              <input type="text" class="form-control form-control-sm" formControlName="companyName" placeholder="e.g. Brain Station 23 / Enosis">
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-semibold text-secondary">Job Circular Text *</label>
+            <textarea 
+              class="form-control" 
+              rows="9" 
+              formControlName="rawContent" 
+              placeholder="Paste the full job circular text here including requirements, responsibilities, and qualifications..."
+              [class.is-invalid]="inputForm.get('rawContent')?.touched && inputForm.get('rawContent')?.invalid"
+            ></textarea>
+            @if (inputForm.get('rawContent')?.touched && inputForm.get('rawContent')?.hasError('required')) {
+              <div class="invalid-feedback">Job circular text is required.</div>
+            }
+            @if (inputForm.get('rawContent')?.touched && inputForm.get('rawContent')?.hasError('minlength')) {
+              <div class="invalid-feedback">Please provide at least 50 characters of job text for accurate analysis.</div>
+            }
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center pt-2">
+            <span class="text-muted small">
+              <i class="bi bi-shield-check text-success me-1"></i> Fact-checked AI extraction
+            </span>
+
+            <button 
+              type="submit" 
+              class="cv-btn-primary d-inline-flex align-items-center gap-2"
+              [disabled]="isAnalyzing()"
+            >
+              @if (isAnalyzing()) {
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+                <span>Extracting Requirements...</span>
+              } @else {
+                <i class="bi bi-stars"></i>
+                <span>Analyze Circular with AI</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    } @else {
+      <!-- STRUCTURED REVIEW & EDIT PANEL -->
+      <div class="cv-card p-4 p-md-5 bg-white border">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 border-bottom pb-3 mb-4">
+          <div>
+            <div class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-2 mb-1 small fw-semibold">
+              <i class="bi bi-check-circle-fill me-1"></i> Extraction Completed
+            </div>
+            <h4 class="fw-bold text-dark mb-0">{{ currentJob()?.jobTitle }}</h4>
+            @if (currentJob()?.companyName) {
+              <span class="text-secondary small fw-medium">{{ currentJob()?.companyName }}</span>
+            }
+          </div>
+
+          <div class="d-flex gap-2">
+            <button class="cv-btn-outline btn-sm" (click)="startNewAnalysis()">
+              <i class="bi bi-plus-lg me-1"></i> Analyze Another
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" (click)="onReanalyze()" [disabled]="isAnalyzing()">
+              <i class="bi bi-arrow-repeat me-1"></i> Re-Analyze
+            </button>
+          </div>
+        </div>
+
+        <div class="alert alert-info py-2 px-3 small rounded-3 mb-4 d-flex align-items-center gap-2">
+          <i class="bi bi-info-circle-fill flex-shrink-0 fs-5"></i>
+          <div>
+            <strong>Review and Customize:</strong> AI has inferred the requirements below. You can add or remove any skills and responsibilities to precisely match what you want your resume tailored for.
+          </div>
+        </div>
+
+        <form [formGroup]="reviewForm">
+          <div class="row g-3 mb-4">
+            <div class="col-md-5">
+              <label class="form-label small fw-semibold text-secondary">Job Title</label>
+              <input type="text" class="form-control form-control-sm" formControlName="jobTitle">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-secondary">Company Name</label>
+              <input type="text" class="form-control form-control-sm" formControlName="companyName">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold text-secondary">Experience Requirement</label>
+              <input type="text" class="form-control form-control-sm" formControlName="experienceRequirement" placeholder="e.g. 2-3 years">
+            </div>
+          </div>
+
+          <!-- Required Skills -->
+          <div class="mb-4">
+            <label class="form-label small fw-bold text-dark d-flex align-items-center gap-1">
+              <span>Required Skills</span>
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1">{{ requiredSkills().length }}</span>
+            </label>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              @for (sk of requiredSkills(); track $index) {
+                <span class="badge bg-light text-dark border p-2 d-inline-flex align-items-center gap-2 rounded-2">
+                  <span class="fw-semibold">{{ sk }}</span>
+                  <button type="button" class="btn btn-link text-danger p-0 ms-1" (click)="removeRequiredSkill($index)">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </span>
+              }
+            </div>
+            <div class="input-group input-group-sm" style="max-width: 320px;">
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="Add required skill..."
+                [value]="newReqSkill()"
+                (input)="newReqSkill.set($any($event.target).value)"
+                (keydown.enter)="addRequiredSkill($event)"
+              >
+              <button class="btn btn-outline-secondary" type="button" (click)="addRequiredSkill()">Add</button>
+            </div>
+          </div>
+
+          <!-- Preferred Skills -->
+          <div class="mb-4">
+            <label class="form-label small fw-bold text-dark d-flex align-items-center gap-1">
+              <span>Preferred / Nice-to-Have Skills</span>
+              <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1">{{ preferredSkills().length }}</span>
+            </label>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              @for (sk of preferredSkills(); track $index) {
+                <span class="badge bg-light text-dark border p-2 d-inline-flex align-items-center gap-2 rounded-2">
+                  <span>{{ sk }}</span>
+                  <button type="button" class="btn btn-link text-danger p-0 ms-1" (click)="removePreferredSkill($index)">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </span>
+              }
+            </div>
+            <div class="input-group input-group-sm" style="max-width: 320px;">
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="Add preferred skill..."
+                [value]="newPrefSkill()"
+                (input)="newPrefSkill.set($any($event.target).value)"
+                (keydown.enter)="addPreferredSkill($event)"
+              >
+              <button class="btn btn-outline-secondary" type="button" (click)="addPreferredSkill()">Add</button>
+            </div>
+          </div>
+
+          <!-- Responsibilities -->
+          <div class="mb-4">
+            <label class="form-label small fw-bold text-dark d-flex align-items-center gap-1">
+              <span>Key Responsibilities</span>
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1">{{ responsibilities().length }}</span>
+            </label>
+            <ul class="list-group list-group-flush mb-2">
+              @for (r of responsibilities(); track $index) {
+                <li class="list-group-item d-flex justify-content-between align-items-start px-0 py-2 bg-transparent">
+                  <div class="small text-secondary">
+                    <i class="bi bi-dot text-primary fs-5 align-middle"></i> {{ r }}
+                  </div>
+                  <button type="button" class="btn btn-link text-danger p-0 ms-2" (click)="removeResponsibility($index)">
+                    <i class="bi bi-trash small"></i>
+                  </button>
+                </li>
+              }
+            </ul>
+            <div class="input-group input-group-sm">
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="Add responsibility..."
+                [value]="newResp()"
+                (input)="newResp.set($any($event.target).value)"
+                (keydown.enter)="addResponsibility($event)"
+              >
+              <button class="btn btn-outline-secondary" type="button" (click)="addResponsibility()">Add</button>
+            </div>
+          </div>
+
+          <!-- Action Footers -->
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-3 border-top">
+            <button 
+              type="button" 
+              class="cv-btn-outline btn-sm d-inline-flex align-items-center gap-1"
+              [disabled]="isSaving()"
+              (click)="onSaveEdits()"
+            >
+              <i class="bi bi-save"></i>
+              <span>{{ isSaving() ? 'Saving...' : 'Save Requirements' }}</span>
+            </button>
+
+            <button 
+              type="button" 
+              class="cv-btn-primary btn-sm d-inline-flex align-items-center gap-2"
+              routerLink="/resumes"
+            >
+              <span>Match & Tailor Resume</span>
+              <i class="bi bi-arrow-right"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  }
+
+  <!-- TAB 2: HISTORY OF SAVED JOBS -->
+  @if (activeTab() === 'history') {
+    <div class="cv-card p-4 p-md-5 bg-white border">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4 class="fw-bold text-dark mb-1">Saved Job Circulars</h4>
+          <p class="text-muted small mb-0">Select any saved circular to review or tailor your resume.</p>
+        </div>
+      </div>
+
+      @if (isLoadingHistory()) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="text-muted small mt-2">Loading saved circulars...</p>
+        </div>
+      } @else if (savedJobs().length === 0) {
+        <div class="text-center py-5 bg-light rounded-3 border">
+          <i class="bi bi-file-earmark-code text-muted fs-1 mb-2"></i>
+          <h6 class="fw-bold text-dark">No saved job circulars yet</h6>
+          <p class="text-muted small mb-3">Paste a circular in the Analyzer tab to extract requirements.</p>
+          <button class="cv-btn-outline btn-sm" (click)="activeTab.set('analyze')">Analyze First Circular</button>
+        </div>
+      } @else {
+        <div class="row g-3">
+          @for (job of savedJobs(); track job.id) {
+            <div class="col-md-6">
+              <div 
+                class="p-4 border rounded-3 bg-light hover-card h-100 d-flex flex-column justify-content-between cursor-pointer"
+                (click)="selectSavedJob(job.id)"
+              >
+                <div>
+                  <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <h5 class="fw-bold text-dark mb-0">{{ job.jobTitle }}</h5>
+                    <button class="btn btn-outline-danger btn-sm p-1 px-2" (click)="onDelete(job.id, $event)" title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+
+                  @if (job.companyName) {
+                    <div class="text-secondary small fw-semibold mb-2">
+                      <i class="bi bi-building me-1"></i> {{ job.companyName }}
+                    </div>
+                  }
+
+                  <div class="d-flex flex-wrap gap-2 my-2">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">
+                      {{ job.requiredSkillsCount }} Skills Identified
+                    </span>
+                    @if (job.experienceRequirement) {
+                      <span class="badge bg-light text-dark border small">
+                        <i class="bi bi-clock me-1"></i> {{ job.experienceRequirement }}
+                      </span>
+                    }
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-3 text-muted small">
+                  <span>{{ job.createdAtUtc | date:'mediumDate' }}</span>
+                  <span class="text-primary fw-semibold">Open & Tailor &rarr;</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

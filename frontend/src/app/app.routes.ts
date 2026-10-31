@@ -28,6 +28,11 @@ export const routes: Routes = [
         path: 'profile',
         canActivate: [authGuard],
         loadComponent: () => import('./features/profile/profile').then(m => m.ProfileComponent)
+      },
+      {
+        path: 'job-analyzer',
+        canActivate: [authGuard],
+        loadComponent: () => import('./features/job-analyzer/job-analyzer').then(m => m.JobAnalyzerComponent)
       }
     ]
   },
